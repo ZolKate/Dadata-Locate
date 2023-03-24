@@ -7,7 +7,7 @@ from db import DB
 def change_lang(db):
     os.system('cls')
     lang = input("Язык (ru/en): ")
-    if lang == "ru" or lang == "en":
+    if lang in ("ru", "en"):
         db.update(lang = lang)
     else:
         print("Язык должен быть ru либо en")
@@ -24,6 +24,7 @@ def change_api_key(db):
     if dadata.check_validation() == True:
         db.update(token=token, key=key)
         dadata.close()
+        del dadata
     else: 
         return
 
@@ -38,9 +39,10 @@ def sign_in(db):
         return 
     
     dadata = Api(token, key, lang)
-    if dadata.check_validation() == True:
+    if dadata.check_validation() == True and lang in ("ru", "en"):
         db.insert(token,key,lang)
         dadata.close()
+        del dadata
     else: 
         sign_in(db)
 
