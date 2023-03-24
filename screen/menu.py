@@ -44,4 +44,4 @@ class Menu:
                 else:
                     item()
             except Exception:
-                pass
+                print("Что-то пошло не так")
