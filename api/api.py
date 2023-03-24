@@ -15,12 +15,6 @@ class Api:
         self.__secret = secret
         self.lang = lang
         self.dadata = Dadata(self.__token, self.__secret)
-
-    def set_token(self, token):
-        self.__token = token
-
-    def set_secret(self, secret):
-        self.__secret = secret
     
     def check_validation(self):
         try:
