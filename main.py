@@ -1,16 +1,8 @@
 import os
-import httpx
-from dadata import Dadata
 from operator import itemgetter
 from screen import Menu
+from api import Api
 from db import DB
-
-HTTP_ERROR = {
-        401: "В запросе отсутствует API-ключ",
-        403: "В запросе указан несуществующий API-ключ или исчерпан дневной лимит по количеству запросов",
-        413: "Слишком большая длина запроса или слишком много условий",
-        429: "Слишком много запросов в секунду или новых соединений в минуту"
-}
 
 def change_lang(db):
     os.system('cls')
@@ -27,7 +19,14 @@ def change_api_key(db):
         key = input("Ключ: ")
     except KeyboardInterrupt:
         return
-    db.update(token=token, key=key)
+    
+    dadata = Api(token, key)
+    if dadata.check_validation() == True:
+        db.update(token=token, key=key)
+        dadata.close()
+    else: 
+        return
+
 
 def sign_in(db):
     print("Введите свои данные для подключения к Dadata")
@@ -37,11 +36,19 @@ def sign_in(db):
         lang = input("Язык (ru/en): ")
     except KeyboardInterrupt:
         return 
-    db.insert(token,key,lang)
+    
+    dadata = Api(token, key, lang)
+    if dadata.check_validation() == True:
+        db.insert(token,key,lang)
+        dadata.close()
+    else: 
+        sign_in(db)
 
 
-def search_coordinates(dadata, lang):
+def search_coordinates(db):
     os.system('cls')
+    token, secret, lang = db.get_data()
+    dadata = Api(token, secret, lang)
     print("Напишите адрес, который вам нужен...")
     sublist = []
     while True: 
@@ -56,18 +63,12 @@ def search_coordinates(dadata, lang):
                 print("Адрес: {} Широта: {} Долгота: {}".format(address, coord["geo_lat"], coord["geo_lon"]))
                 break
             else:
-                sublist = api_call(dadata, lang, value)
+                sublist = api_call(dadata, value)
         else:
-            sublist = api_call(dadata, lang, value)
+            sublist = api_call(dadata, value)
 
-def api_call(dadata, lang, value): 
-        try:
-            result = dadata.suggest(name='address', query=value, language = lang, count=10)
-        except httpx.HTTPStatusError as exc:
-            print(HTTP_ERROR[exc.response.status_code])
-        except httpx.RequestError as exc:
-            print(f"Возникла ошибка при подключении к {exc.request.url!r}.")
-
+def api_call(dadata, value):
+        result=dadata.get_suggest(value)
         data = []
         i=1
         for item in result:
@@ -87,8 +88,6 @@ def main():
     if not db.has_rows():
         sign_in(db)
 
-    token, secret, lang = db.get_data()
-    dadata = Dadata(token, secret)
 
     settings_menu = Menu("Настройки Dadata coordinates",
                     {
@@ -100,11 +99,10 @@ def main():
     main_menu = Menu("Dadata coordinates",
                 {
                     "Настройки": settings_menu,
-                    "Поиск": lambda: search_coordinates(dadata, lang)
+                    "Поиск": lambda: search_coordinates(db)
                 })
     
     main_menu.run()
-    
 
 
 if __name__ == "__main__":
