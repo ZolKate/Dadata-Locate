@@ -21,7 +21,7 @@ def change_api_key(db):
         return
     
     dadata = Api(token, key)
-    if dadata.check_validation() == True:
+    if dadata.check_validation():
         db.update(token=token, key=key)
         dadata.close()
         del dadata
@@ -39,7 +39,7 @@ def sign_in(db):
         return 
     
     dadata = Api(token, key, lang)
-    if dadata.check_validation() == True and lang in ("ru", "en"):
+    if dadata.check_validation() and lang in ("ru", "en"):
         db.insert(token,key,lang)
         dadata.close()
         del dadata
