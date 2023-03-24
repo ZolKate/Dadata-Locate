@@ -62,10 +62,12 @@ def search_coordinates(dadata, lang):
 
 def api_call(dadata, lang, value): 
         try:
-            result = dadata.suggest(name='address', query=value, language = lang, count=2)
+            result = dadata.suggest(name='address', query=value, language = lang, count=10)
         except httpx.HTTPStatusError as exc:
             print(HTTP_ERROR[exc.response.status_code])
-            return
+        except httpx.RequestError as exc:
+            print(f"Возникла ошибка при подключении к {exc.request.url!r}.")
+
         data = []
         i=1
         for item in result:
