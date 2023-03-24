@@ -1,8 +1,16 @@
 import os
+import httpx
 from dadata import Dadata
 from operator import itemgetter
 from screen import Menu
 from db import DB
+
+HTTP_ERROR = {
+        401: "В запросе отсутствует API-ключ",
+        403: "В запросе указан несуществующий API-ключ или исчерпан дневной лимит по количеству запросов",
+        413: "Слишком большая длина запроса или слишком много условий",
+        429: "Слишком много запросов в секунду или новых соединений в минуту"
+}
 
 def change_lang(db):
     os.system('cls')
@@ -11,7 +19,6 @@ def change_lang(db):
         db.update(lang = lang)
     else:
         print("Язык должен быть ru либо en")
-    print(db.get_data())
 
 def change_api_key(db):
     os.system('cls')
@@ -54,9 +61,11 @@ def search_coordinates(dadata, lang):
             sublist = api_call(dadata, lang, value)
 
 def api_call(dadata, lang, value): 
-        
-        result = dadata.suggest(name='address', query=value, language = lang, count=2)
-
+        try:
+            result = dadata.suggest(name='address', query=value, language = lang, count=2)
+        except httpx.HTTPStatusError as exc:
+            print(HTTP_ERROR[exc.response.status_code])
+            return
         data = []
         i=1
         for item in result:
