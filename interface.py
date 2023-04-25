@@ -115,15 +115,17 @@ class SuggestState(FunctionalState):
             query = input(">> ")
             res = self.action(query)
             if len(res) > 0:
-                return SelectState(
-                    "Выберите вариант адреса",
+                ctn = SelectState(
+                    "Варианты адреса\n",
                     [
                       FunctionWithoutInput(
                             x.address, 
                             lambda : print(f"Кординаты места: {x.lat} {x.lon}")
                         ) for x in res
                     ]
-                ).display(state_manager)
+                )
+                ctn.prev_state = self
+                return ctn.display(state_manager)
             else:
                 print("Ничего не найдено")
         except KeyboardInterrupt:
